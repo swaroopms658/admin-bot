@@ -1,5 +1,7 @@
 # 🧠 Neural Admin Bot
 
+**[👉 Live Demo](https://admin-mu-roan.vercel.app)**
+
 A powerful Discord Bot integrated with a state-of-the-art "Neural" Admin Dashboard. This system allows you to manage your AI agent's behavior, personality, and access control in real-time through a premium web interface.
 
 ![Neural Admin Dashboard](https://github.com/swaroopms658/admin-bot/assets/placeholder-image.png)
