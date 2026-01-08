@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 
 // Ensure we find the DB relative to the workshop root
-const dbPath = path.resolve(process.cwd(), '../dev.db');
+const dbPath = path.resolve(process.cwd(), '../admin/prisma/dev.db');
 const db = new Database(dbPath);
 
 export interface Config {
