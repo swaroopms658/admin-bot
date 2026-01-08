@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../../dev.db"
+}
+
+model Config {
+  id                 Int     @id @default(1)
+  systemInstructions String  @default("You are a helpful assistant.")
+  llmProvider        String  @default("gemini") // "openai" or "gemini"
+  apiKey             String? // Storage for the API Key
+  discordBotToken    String? // Storage for the Bot Token
+  modelName          String  @default("gemini-pro") // e.g. "gpt-4o", "gemini-pro"
+}
+
+model AllowedChannel {
+  id        String   @id // Discord Channel ID
+  name      String?  // Optional descriptive name
+  createdAt DateTime @default(now())
+}
+
+model ConversationLog {
+  id        Int      @id @default(autoincrement())
+  channelId String
+  userId    String
+  username  String
+  message   String
+  role      String   // "user" or "assistant"
+  timestamp DateTime @default(now())
+}
