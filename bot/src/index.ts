@@ -25,7 +25,7 @@ client.on('messageCreate', async (message: Message) => {
 
     // Check Allow-list
     console.log(`Received message in channel: ${message.channelId}`);
-    const allowed = isChannelAllowed(message.channelId);
+    const allowed = await isChannelAllowed(message.channelId);
     console.log(`Channel ${message.channelId} allowed? ${allowed}`);
 
     if (!allowed) {
@@ -34,7 +34,7 @@ client.on('messageCreate', async (message: Message) => {
     }
 
     try {
-        const config = getConfig();
+        const config = await getConfig();
         if (!config) {
             console.error("No config found in DB.");
             return;
@@ -46,10 +46,10 @@ client.on('messageCreate', async (message: Message) => {
         }
 
         // Log User Message
-        addLog(message.channelId, message.author.id, message.author.username, 'user', message.content);
+        await addLog(message.channelId, message.author.id, message.author.username, 'user', message.content);
 
         // Get History for Context (e.g. last 10 messages)
-        const historyRows = getHistory(message.channelId);
+        const historyRows = await getHistory(message.channelId);
         // Convert to LLM format
         const history = historyRows.map((row: any) => ({
             role: row.role as 'user' | 'assistant',
@@ -64,7 +64,7 @@ client.on('messageCreate', async (message: Message) => {
         const responseText = await generateResponse(history, config);
 
         // Log Assistant Response
-        addLog(message.channelId, client.user?.id || 'bot', 'Assistant', 'assistant', responseText);
+        await addLog(message.channelId, client.user?.id || 'bot', 'Assistant', 'assistant', responseText);
 
         // Reply (Handling 2000 char limit)
         const MAX_LENGTH = 1900; // Leave buffer
@@ -89,22 +89,26 @@ client.on('messageCreate', async (message: Message) => {
 // Solution: Check Environment first, then DB.
 // But mostly users will want to configure it via Admin.
 // So we try fetching Config first.
-const config = getConfig();
-const token = process.env.DISCORD_TOKEN || config?.discordBotToken;
 
-if (!token) {
-    console.error("Error: No Discord Token found in .env or Database Config. Please configure via Admin Console.");
-    // We can try polling Config?
-    // Build a retry loop
-    const interval = setInterval(() => {
-        const c = getConfig();
-        if (c?.discordBotToken) {
-            clearInterval(interval);
-            client.login(c.discordBotToken);
-        } else {
-            console.log("Waiting for Discord Token configuration...");
-        }
-    }, 5000);
-} else {
-    client.login(token);
-}
+// Wrap connection logic in async IIFE
+(async () => {
+    let config = await getConfig();
+    const token = process.env.DISCORD_TOKEN || config?.discordBotToken;
+
+    if (!token) {
+        console.error("Error: No Discord Token found in .env or Database Config. Please configure via Admin Console.");
+        // We can try polling Config?
+        // Build a retry loop
+        const interval = setInterval(async () => {
+            config = await getConfig();
+            if (config?.discordBotToken) {
+                clearInterval(interval);
+                client.login(config.discordBotToken);
+            } else {
+                console.log("Waiting for Discord Token configuration...");
+            }
+        }, 5000);
+    } else {
+        client.login(token);
+    }
+})();
